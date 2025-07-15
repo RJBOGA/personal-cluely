@@ -8,42 +8,35 @@ export type AudioCaptureStreams = {
 };
 
 /**
- * Starts capturing both microphone and system audio and combines them into a single stream.
+ * Starts capturing ONLY system audio.
  *
- * @returns A promise that resolves to an object containing the combined stream and the original source streams for cleanup.
+ * @returns A promise that resolves to an object containing the system stream.
  */
-export async function startAudioCapture(): Promise<AudioCaptureStreams> {
+export async function startSystemAudioCapture(): Promise<Pick<AudioCaptureStreams, 'combinedStream' | 'systemStream'>> {
   try {
-    // 1. Get or create an AudioContext
     if (!audioContext || audioContext.state === 'closed') {
       audioContext = new AudioContext();
     }
 
-    // 2. Capture microphone input
-    const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const micSource = audioContext.createMediaStreamSource(micStream);
-
-    // 3. Capture system audio loopback
+    // 1. Capture system audio loopback
     await window.api.enableLoopback();
     const systemStream = await navigator.mediaDevices.getDisplayMedia({
       video: true,
       audio: true,
     });
-    // Keep video track for potential screen frames
     const systemSource = audioContext.createMediaStreamSource(systemStream);
 
-    // 4. Combine streams
+    // 2. Create a destination node. The "combined" stream will now only contain system audio.
     const destination = audioContext.createMediaStreamDestination();
-    micSource.connect(destination);
     systemSource.connect(destination);
 
     const combinedStream = destination.stream;
 
-    return { combinedStream, micStream, systemStream };
+    // Return a structure that matches what the calling code expects, omitting the micStream.
+    return { combinedStream, systemStream };
   } catch (err) {
-    console.error('Error starting audio capture:', err);
-    // Best-effort cleanup if something goes wrong during startup
-    await stopAudioCapture({} as AudioCaptureStreams); // Pass empty object to trigger cleanup
+    console.error('Error starting system-only audio capture:', err);
+    await stopAudioCapture({} as AudioCaptureStreams); // Best-effort cleanup
     throw err;
   }
 }

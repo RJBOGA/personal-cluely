@@ -1,4 +1,4 @@
-import { startAudioCapture, stopAudioCapture, AudioCaptureStreams } from './audio'
+import { startSystemAudioCapture, stopAudioCapture, AudioCaptureStreams } from './audio'
 
 export interface AudioStreamHandle {
   stop: () => Promise<void>
@@ -11,7 +11,8 @@ export interface AudioStreamHandle {
 export async function startAudioStreaming (
   onPCMChunk: (chunk: Uint8Array) => void
 ): Promise<{ handle: AudioStreamHandle; streams: AudioCaptureStreams }> {
-  const streams = await startAudioCapture()
+  // Use the new function:
+  const streams = await startSystemAudioCapture() as AudioCaptureStreams; // Cast to original type
 
   // We create a separate AudioContext so the caller is not responsible for closing it.
   const ctx = new AudioContext({ sampleRate: 16000 })

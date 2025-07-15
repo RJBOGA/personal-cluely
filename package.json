@@ -52,6 +52,7 @@
     "groq-sdk": "^0.26.0",
     "katex": "^0.16.22",
     "lucide-react": "^0.511.0",
+    "mammoth": "^1.9.1",
     "node-addon-api": "^8.4.0",
     "node-gyp-build": "^4.8.4",
     "react-markdown": "^10.1.0",

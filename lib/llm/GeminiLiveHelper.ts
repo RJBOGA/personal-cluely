@@ -1,6 +1,6 @@
 import { GoogleGenAI, Modality } from '@google/genai'
-
 import { GEMINI_SYSTEM_PROMPT } from './systemPrompt'
+import { loadResumeText } from './contextLoader';
 
 const GEMINI_API_KEY =
   process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY
@@ -39,6 +39,17 @@ export class GeminiLiveHelper {
     // If a session is already running, return early.
     // This check should be after closing potentially old sessions.
     if (this.session) return;
+
+    // --- START OF MODIFICATIONS ---
+
+    // 1. Load the resume text
+    const resumeText = await loadResumeText();
+    let systemInstruction = GEMINI_SYSTEM_PROMPT;
+
+    // 2. Create a personalized system prompt if resume exists
+    if (resumeText) {
+      systemInstruction = `You MUST act as the person described in the resume below. Answer all questions in the first person ("I", "my", "we" when referring to a team I was on). Your identity is that of the person in the resume. Do not break character. Do not mention that you are an AI. Use the resume for context and background.\n\n--- RESUME ---\n${resumeText}\n\n--- END RESUME ---`;
+    }
 
     let resolveConnection: () => void;
     let rejectConnection: (e: any) => void;
@@ -105,7 +116,7 @@ export class GeminiLiveHelper {
         },
         onclose: (e) => console.warn('[GeminiLive] closed', e.reason),
       },
-      config: { responseModalities: [Modality.TEXT], systemInstruction: GEMINI_SYSTEM_PROMPT},
+      config: { responseModalities: [Modality.TEXT], systemInstruction: systemInstruction},
     })) as unknown as LiveSession;
 
     // detach async listener to forward text

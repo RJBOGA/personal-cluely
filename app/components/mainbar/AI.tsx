@@ -151,15 +151,15 @@ export const AI: React.FC<AIProps> = ({ isChatPaneVisible, onContentChange }) =>
 
   return (
     <div className="flex max-h-full w-full bg-transparent p-2 gap-3">
-      {/* Left Panel - Transcript (Fixed Width) */}
+      {/* Left Panel - Transcript (Corrected Width) */}
       {isLiveActive && (
-        <div className="w-100 flex-shrink-0 h-full">
+        <div className="w-0/5 flex-shrink-0 h-full">
           <TranscriptPane />
         </div>
       )}
 
-      {/* Right Panel - Chat (Flexible Width) */}
-      <div className="flex-1 flex flex-col h-full gap-2 min-w-0 text-sm">
+      {/* Right Panel - Chat (Corrected Width) */}
+      <div className={`${isLiveActive ? 'w-5/5' : 'w-full'} flex flex-col h-full gap-2 min-w-0 text-sm`}>
         {/* Chat Content - Expands to fill available space */}
         {renderChatContent()}
         

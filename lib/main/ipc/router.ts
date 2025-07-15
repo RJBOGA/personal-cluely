@@ -1,4 +1,8 @@
 import { BrowserWindow, ipcMain, screen, desktopCapturer } from 'electron'
+// Update the import path if the file is actually located elsewhere, for example:
+import { loadResumeText } from '../../llm/contextLoader';
+// Or, if the file does not exist, create 'contextLoader.ts' in the correct directory with the following content:
+// export async function loadResumeText(): Promise<string> { return ""; }
 
 import { GeminiHelper } from '../../llm/GeminiHelper';
 import { appState } from '@/lib/state/AppStateMachine'
@@ -57,6 +61,17 @@ export function registerIpcHandlers(ctx: IpcContext): void {
     setCurrentInputValue(input);
     apiRequestController = new AbortController();
     try {
+      // --- START OF MODIFICATIONS ---
+      // 1. Load the resume text
+      const resumeText = await loadResumeText();
+
+      // 2. Construct the personalized prompt
+      let personalizedInput = input;
+      if (resumeText) {
+        personalizedInput = `Based on the following resume, please act as the person described and answer the question in the first person ("I", "my").\n\n--- RESUME ---\n${resumeText}\n\n--- QUESTION ---\n${input}`;
+      }
+      // --- END OF MODIFICATIONS ---
+
       // 1. Capture the primary screen
       const primaryDisplay = screen.getPrimaryDisplay();
       const sources = await desktopCapturer.getSources({
@@ -79,8 +94,10 @@ export function registerIpcHandlers(ctx: IpcContext): void {
 
       const screenshotBase64 = screenshotPng.toString('base64');
       let isFirstChunk = true;
+
+      // Use the 'personalizedInput' variable here instead of 'input'
       await geminiHelper.sendMessageStream(
-        input,
+        personalizedInput, // <--- MODIFIED
         (chunk) => {
           if (isFirstChunk) {
             broadcast('api-success');
